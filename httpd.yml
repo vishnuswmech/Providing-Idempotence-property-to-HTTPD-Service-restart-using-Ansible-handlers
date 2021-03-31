@@ -1,0 +1,34 @@
+- name: Providing idempotence to httpd restart 
+  hosts: httpd
+  become: yes
+
+  tasks:
+    - name: httpd installation using yum
+      yum:
+       name: httpd
+       state: present
+  
+    - name: Transfering html files from controller node to managed node's document root 
+      copy:
+       src: /root/httpd.html
+       dest: /var/www/html
+  
+    - name: Replace the port number from 80 to 8080
+      lineinfile:
+       path: /etc/httpd/conf/httpd.conf
+       regexp: '^Listen 80'
+       line: Listen 8080
+      notify:
+      - restart
+
+    - name: Start HTTPD
+      service:
+       name: httpd
+       state: started
+
+
+  handlers:
+   - name: restart
+     service:
+      name: httpd
+      state: restarted
